@@ -6,6 +6,7 @@ GUI with a Linux-ready CLI fallback.
 ## Features
 - Log in to a UniFi Network controller and discover available sites and WLAN profiles.
 - Display MAC filter lists alongside resolved device names pulled from the "Known devices" catalogue.
+- Filter MAC lists instantly via the GUI search box.
 - Export MAC lists (including friendly names) to TXT, CSV, or XLSX when using the CLI.
 - Toggle SSL verification and timeouts for stricter environments.
 
