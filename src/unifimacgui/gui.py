@@ -10,6 +10,20 @@ from typing import Dict, List, Optional
 from .client import Site, UniFiClient, WlanProfile, label_mac_addresses
 
 
+def filter_entries(entries: List[tuple[str, str]], term: str) -> List[tuple[str, str]]:
+    """Return entries whose MAC or name contains the search term."""
+
+    if not term:
+        return list(entries)
+
+    needle = term.lower()
+    filtered: List[tuple[str, str]] = []
+    for mac, name in entries:
+        if needle in mac.lower() or needle in name.lower():
+            filtered.append((mac, name))
+    return filtered
+
+
 class GuiState:
     """Mutable state shared between GUI callbacks."""
 
@@ -36,9 +50,13 @@ class UnifiGui(tk.Tk):
 
         self.site_var = tk.StringVar()
         self.wlan_var = tk.StringVar()
+        self.search_var = tk.StringVar()
 
         self._build_form()
         self._build_table()
+
+        self._all_entries: List[tuple[str, str]] = []
+        self.search_var.trace_add("write", lambda *_: self._refresh_table())
 
     # ------------------------------------------------------------------ UI setup
     def _build_form(self) -> None:
@@ -77,15 +95,25 @@ class UnifiGui(tk.Tk):
         table_frame = ttk.Frame(self, padding=16)
         table_frame.pack(fill=tk.BOTH, expand=True)
 
+        filter_frame = ttk.Frame(table_frame)
+        filter_frame.pack(fill=tk.X, side=tk.TOP, pady=(0, 8))
+        ttk.Label(filter_frame, text="Filter").pack(side=tk.LEFT)
+        ttk.Entry(filter_frame, textvariable=self.search_var).pack(
+            side=tk.LEFT, fill=tk.X, expand=True, padx=(8, 0)
+        )
+
+        tree_container = ttk.Frame(table_frame)
+        tree_container.pack(fill=tk.BOTH, expand=True)
+
         columns = ("mac", "name")
-        self.tree = ttk.Treeview(table_frame, columns=columns, show="headings")
+        self.tree = ttk.Treeview(tree_container, columns=columns, show="headings")
         self.tree.heading("mac", text="MAC")
         self.tree.heading("name", text="Name")
         self.tree.column("mac", width=200, anchor=tk.W)
         self.tree.column("name", width=280, anchor=tk.W)
         self.tree.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
 
-        scrollbar = ttk.Scrollbar(table_frame, orient=tk.VERTICAL, command=self.tree.yview)
+        scrollbar = ttk.Scrollbar(tree_container, orient=tk.VERTICAL, command=self.tree.yview)
         self.tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(fill=tk.Y, side=tk.RIGHT)
 
@@ -174,6 +202,11 @@ class UnifiGui(tk.Tk):
         self.status_var.set(f"Loaded {len(entries)} MAC addresses for {wlan.name}.")
 
     def _populate_table(self, entries: List[tuple[str, str]]) -> None:
+        self._all_entries = list(entries)
+        self._refresh_table()
+
+    def _refresh_table(self) -> None:
+        entries = filter_entries(self._all_entries, self.search_var.get().strip())
         self.tree.delete(*self.tree.get_children())
         for mac, name in entries:
             self.tree.insert("", tk.END, values=(mac, name))

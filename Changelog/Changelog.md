@@ -17,3 +17,13 @@
 **Docs:** README updated.  
 **Rollback Plan:** Remove the new `src/unifimacgui` package, delete tests, and restore the previous README instructions.  
 **Refs:** N/A
+
+## [2025-10-22 15:05] Add live filter to MAC table
+**Change Type:** Normal Change
+**Why:** Allow users to quickly search MAC entries in the GUI.
+**What changed:** Added a search box above the MAC table, introduced reusable filtering logic, and covered it with unit tests.
+**Impact:** GUI users can filter MACs without exporting; CLI behaviour unchanged.
+**Testing:** `pytest` (GUI filtering helper tests).
+**Docs:** README feature list updated.
+**Rollback Plan:** Revert the GUI search commit and delete the new unit test.
+**Refs:** N/A
